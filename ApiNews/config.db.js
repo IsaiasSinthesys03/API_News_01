@@ -1,18 +1,23 @@
-const Sequelize = require('sequelize')
+// config.db.js (Versión Final para Render/Postgres)
+const Sequelize = require('sequelize');
 require('dotenv').config();
-const { DB_HOST, DB_NAME, DB_PASSWORD, DB_USER } = require('./config.js');
 
-const connection = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
-    host: DB_HOST,
-    dialect: 'mysql',
-})
+// Buscamos la URL de conexión única en las variables de entorno
+const dbUrl = process.env.DATABASE_URL;
 
-connection.authenticate()
-    .then(() => {
-        console.log('Se ha establecido conexión con la base de datos')
-    })
-    .catch(err => {
-        console.log('No se pudo establecer conexión con la base de datos')
-    })
+if (!dbUrl) {
+  throw new Error("No se encontró la URL de la base de datos. Asegúrate de que DATABASE_URL esté definida en Render.");
+}
+
+const connection = new Sequelize(dbUrl, {
+  dialect: 'postgres', // Cambiamos el dialecto a postgres
+  // Esta parte es MUY IMPORTANTE para la conexión segura en Render
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false // Requerido por la configuración de SSL de Render
+    }
+  }
+});
 
 module.exports = { connection };
